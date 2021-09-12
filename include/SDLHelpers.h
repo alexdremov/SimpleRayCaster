@@ -93,3 +93,16 @@ inline void freeSurface(SDL_Surface *surface) {
 inline void saveSurface(SDL_Surface *surface, const char *file) {
     IMG_SavePNG(surface, file);
 }
+
+void SDLInit(SDL_Window *&win, int *w, int *h) {
+    win = SDL_CreateWindow("Graph", // creates a window
+                           SDL_WINDOWPOS_CENTERED,
+                           SDL_WINDOWPOS_CENTERED,
+                           1920, 1080,
+                           SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_FULLSCREEN_DESKTOP);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 2);
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+        printf("error initializing SDL: %s\n", SDL_GetError());
+    }
+    SDL_GL_GetDrawableSize(win, w, h);
+}

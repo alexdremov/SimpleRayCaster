@@ -3,7 +3,7 @@
 
 struct SceneOptions {
     uint32_t width = 640, height = 480;
-    float fov = 55.7;
+    float fov = 55;
     RGBColor backgroundColor = Vec3f(0.01, 0.01, 0.01);
     uint32_t maxDepth = 5;
 

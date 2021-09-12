@@ -7,6 +7,16 @@ void freeWorld(const FastList<HittableObject *> &objects, const FastList<Light *
 
 void SDLInit(SDL_Window *&win, int *w, int *h);
 
+void eventLoop(SDL_Surface *content, SDL_Event &event, bool printed, const float moveStep, SceneOptions &options,
+               int &close);
+
+
+inline Matrix4x4f getRandRot(float modify = 100) {
+    return Matrix4x4f::rot((rand() / (float)RAND_MAX - 0.5) / modify,
+                           (rand() / (float)RAND_MAX - 0.5) / modify,
+                           (rand() / (float)RAND_MAX - 0.5) / modify);
+}
+
 int main() {
     FastList<HittableObject *> objects = {};
     FastList<Light *> lights = {};
@@ -14,7 +24,7 @@ int main() {
 
     SDL_Window *win = nullptr;
     int w = 0, h = 0;
-    const float scale = 1 / 1.0;
+    const float scale = 1 / 3.0;
     SDLInit(win, &w, &h);
     options.width = w * scale;
     options.height = h * scale;
@@ -24,35 +34,27 @@ int main() {
     SDL_Surface *content = createSurface(options.width, options.height);
     SDL_Surface *screen = SDL_GetWindowSurface(win);
 
-    int close = 0;
-    bool mousePressed = false;
-    SDL_MouseMotionEvent pressPosition = {};
+    Matrix4x4f rotateViewMatrix = getRandRot(100);
+    Matrix4x4f rotateViewCompos = getRandRot(100);
 
-    float degY = 0.008;
-    float degZ = 0.013;
+    Matrix4x4f rotateViewComposFirst = getRandRot(10);
+    Matrix4x4f rotateViewComposSecond = getRandRot(10);
 
-    Matrix4x4f rotateViewMatrixY = Matrix4x4f::rotY(degY);
-    Matrix4x4f rotateViewMatrixZ = Matrix4x4f::rotZ(degZ);
+    Matrix4x4f rotateViewComposSideFirst = getRandRot(10);
+    Matrix4x4f rotateViewComposSideSecond = getRandRot(10);
 
-    Matrix4x4f rotateViewMatrix = rotateViewMatrixY * Matrix4x4f::rotX(0.01) * Matrix4x4f::rotZ(-0.02);
-    Matrix4x4f rotateViewCompos = rotateViewMatrixY * rotateViewMatrixZ;
-
-    Matrix4x4f rotateViewComposFirst = Matrix4x4f::rotX(-0.06) * Matrix4x4f::rotX(-0.002) * Matrix4x4f::rotZ(-0.01);
-    Matrix4x4f rotateViewComposSecond = rotateViewCompos * Matrix4x4f::rotY(0.004);
-
-    Matrix4x4f rotateViewComposSideFirst = Matrix4x4f::rotZ(-0.002) * Matrix4x4f::rotX(0.01) * Matrix4x4f::rotY(0.01);
-    Matrix4x4f rotateViewComposSideSecond = Matrix4x4f::rotZ(0.002) * Matrix4x4f::rotX(-0.06) * Matrix4x4f::rotY(-0.007);
-
-    Matrix4x4f rotateViewCubeFirst = Matrix4x4f::rotZ(0.009) * Matrix4x4f::rotX(-0.004) * Matrix4x4f::rotY(-0.01);
-    Matrix4x4f rotateViewCubeSecond = Matrix4x4f::rotZ(-0.003) * Matrix4x4f::rotX(0.008) * Matrix4x4f::rotY(0.002);
+    Matrix4x4f rotateViewCubeFirst = getRandRot(10);
+    Matrix4x4f rotateViewCubeSecond = getRandRot(10);
 
     HittableObject *firstRotatableObj = nullptr, *secondRotatableObj = nullptr;
     HittableObject *sideFirstRotatableObj = nullptr, *sideSecondRotatableObj = nullptr;
     HittableObject *cubeFirstObj = nullptr, *cubeSecondObj = nullptr;
     objects.get(2, &firstRotatableObj);
     objects.get(4, &secondRotatableObj);
+
     objects.get(1, &sideFirstRotatableObj);
     objects.get(5, &sideSecondRotatableObj);
+
     objects.get(6, &cubeFirstObj);
     objects.get(7, &cubeSecondObj);
     auto *firstRotatable = dynamic_cast<MarkovaSphere *>(firstRotatableObj),
@@ -63,12 +65,9 @@ int main() {
     auto *cubeFirst = dynamic_cast<Cube *>(cubeFirstObj),
             *cubeSecond = dynamic_cast<Cube *>(cubeSecondObj);
 
-    float wait = 0;
-
+    int close = 0;
     while (!close) {
         auto timeStart = std::chrono::high_resolution_clock::now();
-
-        options.cameraToWorld *= rotateViewMatrix;
 
         firstRotatable->center = rotateViewComposFirst.multVecMatrix(firstRotatable->center);
         secondRotatable->center = rotateViewComposSecond.multVecMatrix(secondRotatable->center);
@@ -82,55 +81,11 @@ int main() {
         render(options, objects, lights, content);
 
         SDL_Event event = {};
-
         bool printed = false;
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-                case SDL_MOUSEMOTION: {
-                    if (mousePressed) {
-                        SDL_MouseMotionEvent drag = event.motion;
-                        pressPosition = event.motion;
-                    }
-                    break;
-                }
-                case SDL_MOUSEBUTTONDOWN: {
-                    mousePressed = true;
-                    pressPosition = event.motion;
-                    break;
-                }
-                case SDL_MOUSEBUTTONUP: {
-                    mousePressed = false;
-                    break;
-                }
-                case SDL_MOUSEWHEEL: {
-                    break;
-                }
-                case SDL_QUIT:
-                    close = 1;
-                    break;
-                case SDL_KEYDOWN:
-                    switch (event.key.keysym.scancode) {
-                        case SDL_SCANCODE_W:
-                        case SDL_SCANCODE_UP:
-                            break;
-                        case SDL_SCANCODE_A:
-                        case SDL_SCANCODE_LEFT:
-                            break;
-                        case SDL_SCANCODE_S:
-                        case SDL_SCANCODE_DOWN: {
-                            if(!printed)
-                                IMG_SavePNG(content, "screensoot.png");
-                            printed = true;
-                            break;
-                        }
-                        case SDL_SCANCODE_D:
-                        case SDL_SCANCODE_RIGHT:
-                            break;
-                        default:
-                            break;
-                    }
-            }
-        }
+        const float moveStep = 0.1;
+
+        eventLoop(content, event, printed, moveStep, options, close);
+
         SDL_BlitScaled(content, nullptr, screen, &clipRect);
         SDL_UpdateWindowSurface(win);
 
@@ -139,7 +94,7 @@ int main() {
         fprintf(stderr, "\rReal FPS: %.2f ", 1.0f / passedTime * 1000);
         const float fpsTarget = 35;
         if (passedTime / 1000 < 1 / fpsTarget) {
-            wait = 1000.0f / fpsTarget - passedTime;
+            float wait = 1000.0f / fpsTarget - passedTime;
             SDL_Delay(wait);
         }
         timeEnd = std::chrono::high_resolution_clock::now();
@@ -150,6 +105,71 @@ int main() {
 
     freeWorld(objects, lights);
     return 0;
+}
+
+void eventLoop(SDL_Surface *content, SDL_Event &event, bool printed, const float moveStep, SceneOptions &options,
+               int &close) {
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+            case SDL_QUIT:
+                close = 1;
+                break;
+            case SDL_KEYDOWN:
+                Vec3f dirForward = options.cameraToWorld.multDirMatrix(Vec3f(0, 0, -1)) * moveStep;
+                Vec3f dirDown = options.cameraToWorld.multDirMatrix(Vec3f(0, 1, 0)) * moveStep;
+                Vec3f dirLeft = options.cameraToWorld.multDirMatrix(Vec3f(-1, 0, 0)) * moveStep;
+                switch (event.key.keysym.scancode) {
+                    case SDL_SCANCODE_W:{
+                        options.cameraToWorld *= Matrix4x4f::translate(dirForward);
+                        break;
+                    }
+                    case SDL_SCANCODE_S:{
+                        options.cameraToWorld *= Matrix4x4f::translate(-dirForward);
+                        break;
+                    }
+                    case SDL_SCANCODE_A:{
+                        options.cameraToWorld *= Matrix4x4f::translate(dirLeft);
+                        break;
+                    }
+                    case SDL_SCANCODE_D:{
+                        options.cameraToWorld *= Matrix4x4f::translate(-dirLeft);
+                        break;
+                    }
+                    case SDL_SCANCODE_Q:{
+                        options.cameraToWorld *= Matrix4x4f::rotY(-moveStep);
+                        break;
+                    }
+                    case SDL_SCANCODE_E:{
+                        options.cameraToWorld *= Matrix4x4f::rotY(moveStep);
+                        break;
+                    }
+                    case SDL_SCANCODE_Z:{
+                        options.cameraToWorld *= Matrix4x4f::translate(dirDown);
+                        break;
+                    }
+                    case SDL_SCANCODE_X:{
+                        options.cameraToWorld *= Matrix4x4f::translate(-dirDown);
+                        break;
+                    }
+                    case SDL_SCANCODE_F:{
+                        if(!printed)
+                            IMG_SavePNG(content, "screensoot.png");
+                        printed = true;
+                        break;
+                    }
+                    case SDL_SCANCODE_UP:{
+                        options.cameraToWorld *= Matrix4x4f::rotX(moveStep);
+                        break;
+                    }
+                    case SDL_SCANCODE_DOWN:{
+                        options.cameraToWorld *= Matrix4x4f::rotX(-moveStep);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+        }
+    }
 }
 
 void freeWorld(const FastList<HittableObject *> &objects, const FastList<Light *> &lights) {
@@ -166,24 +186,11 @@ void freeWorld(const FastList<HittableObject *> &objects, const FastList<Light *
     }
 }
 
-void SDLInit(SDL_Window *&win, int *w, int *h) {
-    win = SDL_CreateWindow("Graph", // creates a window
-                           SDL_WINDOWPOS_CENTERED,
-                           SDL_WINDOWPOS_CENTERED,
-                           1920, 1080,
-                           SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_FULLSCREEN_DESKTOP);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 2);
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        printf("error initializing SDL: %s\n", SDL_GetError());
-    }
-    SDL_GL_GetDrawableSize(win, w, h);
-}
-
 
 SceneOptions generateWorld(FastList<HittableObject *> &objects, FastList<Light *> &lights) {
     SceneOptions options = {};
 
-    options.cameraToWorld.set(3, 2, 15);
+    options.cameraToWorld.set(3, 2, 10);
     options.cameraToWorld.set(3, 1, 1);
     options.cameraToWorld.set(3, 0, 0);
 
@@ -211,12 +218,14 @@ SceneOptions generateWorld(FastList<HittableObject *> &objects, FastList<Light *
     HittableObject *cubeOne = new Cube({2.5, -2.5, 2.5}, 1),
             *cubeTwo = new Cube({-2.5, 2.5, -2.5}, 1);
 
-    cubeOne->n = cubeTwo->n = 15;
+    cubeOne->n = cubeTwo->n = 16;
     cubeOne->color = {108.0f / 255, 216.0f / 255, 212.0f / 255};
     cubeTwo->color = {216.0f / 255, 108.0f / 255, 112.0f / 255};
 
     objects.pushBack(cubeOne);
     objects.pushBack(cubeTwo);
+
+    objects.pushBack(new MarkovaSphere({0, 0, 0}, 0.8));
 
     lights.pushBack(new PointLight({10, 10, 10},
                                    {216.0f / 255, 108.0f / 255, 112.0f / 255}, 19000));

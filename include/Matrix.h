@@ -245,6 +245,14 @@ public:
         content[row][col] = value;
     }
 
+    explicit Matrix4x4(const T data) {
+        static const float identityData[] = {data, data, data, data,
+                                             data, data, data, data,
+                                             data, data, data, data,
+                                             data, data, data, data};
+        content = *((content16*)identityData);
+    }
+
     explicit Matrix4x4(const T data[4 * 4]) {
         this->content = *((content16*)data);
     }
@@ -262,6 +270,46 @@ public:
     Matrix4x4& operator*=(const Matrix4x4 &v) {
         content *= v.content;
         return *this;
+    }
+
+    static Matrix4x4 translateX(T len){
+        T data[4 * 4] = {
+                1, 0, 0, len,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+        };
+        return Matrix4x4(data);
+    }
+
+    static Matrix4x4 translateY(T len){
+        T data[4 * 4] = {
+                1, 0, 0, 0,
+                0, 1, 0, len,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+        };
+        return Matrix4x4(data);
+    }
+
+    static Matrix4x4 translateZ(T len){
+        T data[4 * 4] = {
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, len,
+                0, 0, 0, 1
+        };
+        return Matrix4x4(data);
+    }
+
+    static Matrix4x4 translate(Vec3f direction){
+        T data[4 * 4] = {
+                1, 0, 0, direction[0],
+                0, 1, 0, direction[1],
+                0, 0, 1, direction[2],
+                0, 0, 0, 1
+        };
+        return Matrix4x4(data);
     }
 
     static Matrix4x4 rotX(T rad){
@@ -292,6 +340,10 @@ public:
                 0, 0, 0, 1
         };
         return Matrix4x4(data);
+    }
+
+    static Matrix4x4 rot(T radX, T radY, T radZ){
+        return rotX(radX) * rotY(radY) * rotZ(radZ);
     }
 
     static void multiply(const Matrix4x4<T> &a, const Matrix4x4 &b, Matrix4x4 &c) {

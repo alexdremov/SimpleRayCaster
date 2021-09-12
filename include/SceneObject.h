@@ -121,19 +121,19 @@ public:
     }
 
     Cube(const Vec3f &centerNew, const float &side) : center(centerNew), side(side) {
-        min = centerNew - side / 2;
-        max = centerNew + side / 2;
+        minCorner = centerNew - side / 2;
+        maxCorner = centerNew + side / 2;
     }
 
     bool intersect(const Ray& ray, float &tNear) const override {
-        Vec3f T_1 = (min - ray.origin) / ray.direction,
-            T_2 = (max - ray.origin) / ray.direction;
+        Vec3f T_1 = (minCorner - ray.origin) / ray.direction,
+            T_2 = (maxCorner - ray.origin) / ray.direction;
         double t_near = -kInfinity;
         double t_far = kInfinity;
 
         for (int i = 0; i < 3; i++){
             if (ray.direction[i] == 0){
-                if ((ray.origin[i] < min[i]) || (ray.origin[i] > max[i])) {
+                if ((ray.origin[i] < minCorner[i]) || (ray.origin[i] > maxCorner[i])) {
                     return false;
                 }
             } else {
@@ -159,19 +159,19 @@ public:
             const Vec3f &hitPoint,
             const Vec3f &viewDirection) const override {
         Vec3f normal = hitPoint - center;
+        float maxcoord = max(fabs(normal[2]), max(fabs(normal[0]), fabs(normal[1])));
+
+        normal *= Vec3f(fabs(normal[0]) == maxcoord,
+                        fabs(normal[1]) == maxcoord,
+                        fabs(normal[2]) == maxcoord);
         normal.normalize();
-
-        normal *= Vec3f(fabs(fabs(normal[0]) - 1) < kEpsilon,
-                        (fabs(fabs(normal[1])) - 1) < kEpsilon,
-                        (fabs(fabs(normal[2])) - 1) < kEpsilon);
-
         return normal;
     }
 
     void setCenter(const Vec3f &newCenter) {
         center = newCenter;
-        min = center - side / 2;
-        max = center + side / 2;
+        minCorner = center - side / 2;
+        maxCorner = center + side / 2;
     }
 
     [[nodiscard]] const Vec3f &getCenter() const {
@@ -180,6 +180,6 @@ public:
 
 private:
     float side;
-    Vec3f min, max;
+    Vec3f minCorner, maxCorner;
     Vec3f center;
 };
