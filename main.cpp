@@ -34,21 +34,15 @@ int main() {
     SDL_Surface *content = createSurface(options.width, options.height);
     SDL_Surface *screen = SDL_GetWindowSurface(win);
 
-    Matrix4x4f rotateViewMatrix = getRandRot(100);
-    Matrix4x4f rotateViewCompos = getRandRot(100);
-
-    Matrix4x4f rotateViewComposFirst = getRandRot(10);
-    Matrix4x4f rotateViewComposSecond = getRandRot(10);
-
-    Matrix4x4f rotateViewComposSideFirst = getRandRot(10);
-    Matrix4x4f rotateViewComposSideSecond = getRandRot(10);
-
-    Matrix4x4f rotateViewCubeFirst = getRandRot(10);
-    Matrix4x4f rotateViewCubeSecond = getRandRot(10);
+    Matrix4x4f rotateViewMatrix = getRandRot(100),rotateViewCompos = getRandRot(100);
+    Matrix4x4f rotateViewComposFirst = getRandRot(10), rotateViewComposSecond = getRandRot(10);
+    Matrix4x4f rotateViewComposSideFirst = getRandRot(10), rotateViewComposSideSecond = getRandRot(10);
+    Matrix4x4f rotateViewCubeFirst = getRandRot(10), rotateViewCubeSecond = getRandRot(10);
 
     HittableObject *firstRotatableObj = nullptr, *secondRotatableObj = nullptr;
     HittableObject *sideFirstRotatableObj = nullptr, *sideSecondRotatableObj = nullptr;
     HittableObject *cubeFirstObj = nullptr, *cubeSecondObj = nullptr;
+
     objects.get(2, &firstRotatableObj);
     objects.get(4, &secondRotatableObj);
 
@@ -57,6 +51,7 @@ int main() {
 
     objects.get(6, &cubeFirstObj);
     objects.get(7, &cubeSecondObj);
+
     auto *firstRotatable = dynamic_cast<MarkovaSphere *>(firstRotatableObj),
             *secondRotatable = dynamic_cast<MarkovaSphere *>(secondRotatableObj),
             *firstSideRotatable = dynamic_cast<MarkovaSphere *>(sideFirstRotatableObj),

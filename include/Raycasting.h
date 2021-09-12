@@ -58,10 +58,10 @@ RGBColor castRay(
         for (size_t lightIndex = lights.begin(); lightIndex != lights.end(); lights.nextIterator(&lightIndex)) {
             Light *light = nullptr;
             lights.get(lightIndex, &light);
-            RGBColor lightDir = {}, lightIntensity = {};
+            RGBColor lightDir, lightIntensity; // not initialized on point
             light->illuminate(hitPoint, lightDir, lightIntensity, tNear);
 
-            bool vis = !trace(hitPoint + hitNormal, -lightDir, objects, tNear);
+            bool vis = !trace(hitPoint, -lightDir, objects, tNear);
 
             diffuse += vis * lightIntensity *
                        max(0.f, hitNormal.dotProduct(-lightDir));
