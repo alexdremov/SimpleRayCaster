@@ -1,6 +1,6 @@
 # Ray caster
 
-- Clang builtin vectors and matrices
+- Clang builtin SIMD vectors and matrices
 - Customizable scene
 - Distant and point lights
 - Spheres and cubes
