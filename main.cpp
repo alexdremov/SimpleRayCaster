@@ -24,7 +24,7 @@ int main() {
 
     SDL_Window *win = nullptr;
     int w = 0, h = 0;
-    const float scale = 1 / 3.0;
+    const float scale = 1 / 2.0;
     SDLInit(win, &w, &h);
     options.width = w * scale;
     options.height = h * scale;

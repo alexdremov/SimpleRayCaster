@@ -5,6 +5,8 @@
 - Distant and point lights
 - Spheres and cubes
 
+<img src="assets/screensoot.png" alt="example">
+
 <img src="assets/screensoot2.png" alt="example">
 
 <img src="assets/screensoot3.png" alt="example">
